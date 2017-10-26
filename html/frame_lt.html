@@ -1,0 +1,473 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+		<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+		<link rel="stylesheet" type="text/css" href="../css/aui.css" />
+		<style type="text/css">
+			.aui-chat .aui-chat-header {
+				margin-bottom: 0px;
+			}
+			.aui-chat .aui-chat-content_img {
+				color: #212121;
+				font-size: 0.7rem;
+				border-radius: 0.2rem;
+				min-height: 2rem;
+				position: relative;
+				padding: 0.3rem;
+				max-width: 44%;
+				word-break: break-all;
+				word-wrap: break-word;
+			}
+			.aui-chat .aui-chat-content_img img {
+				max-width: 100%;
+				display: inline;
+				border-radius: 0.2rem;
+			}
+			.aui-chat .aui-chat-left .aui-chat-content_img {
+				background-color: #b3e5fc;
+				float: left;
+				left: 0.5rem;
+			}
+			.aui-chat .aui-chat-right .aui-chat-content_img {
+				background-color: #ffffff;
+				right: 0.5rem;
+				float: right;
+			}
+		</style>
+	</head>
+	<body>
+		<section class="aui-chat" id="xx">
+			<div id="hist"></div>
+		</section>
+	</body>
+	<script type="text/javascript" src="../script/api.js" ></script>
+	<script type="text/javascript" src="../script/zepto.min.js"></script>
+	<script type="text/javascript" src="../script/base.js" ></script>
+	<script type="text/javascript">
+		apiready = function() {
+			var rong = api.require('rongCloud2');
+			getLatestMessages(api.pageParam.id, 'PRIVATE');
+			var UIChatBox = api.require('UIChatBox');
+			UIChatBox.open({
+				placeholder : '',
+				maxRows : 4,
+				emotionPath : 'widget://res/ChatBox/emotion',
+				texts : {
+					recordBtn : {
+						normalTitle : '按住  说话',
+						activeTitle : '松开  结束'
+					},
+					sendBtn : {
+						title : '发送'
+					}
+				},
+				styles : {
+					inputBar : {
+						borderColor : '#ececec',
+						bgColor : '#fbfbfb'
+					},
+					inputBox : {
+						borderColor : '#B3B3B3',
+						bgColor : '#FFFFFF'
+					},
+					emotionBtn : {
+						normalImg : 'widget://res/ChatBox/face1.png'
+					},
+					extrasBtn : {
+						normalImg : 'widget://res/ChatBox/add1.png'
+					},
+					keyboardBtn : {
+						normalImg : 'widget://res/ChatBox/key1.png'
+					},
+					speechBtn : {
+						normalImg : 'widget://res/ChatBox/rec.png'
+					},
+					recordBtn : {
+						normalBg : '#ffffff',
+						activeBg : '#F4F4F4',
+						color : '#5D5D5D',
+						size : 14
+					},
+					indicator : {
+						target : 'both',
+						color : '#c4c4c4',
+						activeColor : '#9e9e9e'
+					},
+					sendBtn : {
+						titleColor : '#ffffff',
+						bg : '#12b7f5',
+						activeBg : '#1ba1d4',
+						titleSize : 14
+					}
+				},
+				extras : {
+					titleSize : 16,
+					titleColor : '#a3a3a3',
+					btns : [{
+						title : '相册图片',
+						normalImg : 'widget://res/ChatBox/img1.png',
+						activeImg : 'widget://res/ChatBox/img2.png'
+					}, {
+						title : '相机拍照',
+						normalImg : 'widget://res/ChatBox/cam1.png',
+						activeImg : 'widget://res/ChatBox/cam2.png'
+					}]
+				}
+			}, function(ret, err) {
+				var eventType = ret.eventType;
+				var msg = ret.msg;
+				if (eventType == 'clickExtras') {
+					if (ret.index == 0) {
+						getPicture('library')
+						pageDown(5);
+					} else if (ret.index == 1) {
+						getPicture('camera')
+						pageDown(5);
+					}
+				}
+				if (eventType == 'send') {
+					if ($api.trimAll(ret.msg) == '') {
+						api.toast({
+							msg : '不能发送空白消息',
+							duration : 1000,
+							location : 'center'
+						});
+					} else {
+						var extra = {
+							xm1 : $api.getStorage('zhanghao'),
+							xm2 : api.pageParam.xm,
+							tx1 : $api.getStorage('tx'),
+							tx2 : api.pageParam.tx
+						};
+						rong.sendTextMessage({
+							conversationType : 'PRIVATE',
+							targetId : api.pageParam.id,
+							text : msg,
+							extra : JSON.stringify(extra)
+						}, function(ret, err) {
+							if (ret.status == 'prepare') {
+								xx = ret.result.message.content.text.replace(reg, function(a, b) {
+									return face[a] ? face[a] : a;
+								});
+							} else if (ret.status == 'success') {
+								var html = '';
+								html += '<div class="aui-chat-item aui-chat-right">';
+								html += '	  <div class="aui-chat-media"><img src="' + $api.getStorage('tx') + '" /></div>';
+								html += '	  <div class="aui-chat-inner"><div class="aui-chat-name">' + $api.getStorage('zhanghao') + '</div>';
+								html += '	       <div class="aui-chat-content">';
+								html += '		        <div class="aui-chat-arrow"></div>';
+								html += xx;
+								html += '               </div>';
+								html += '	  </div>';
+								html += '</div>';
+								$api.append($api.dom('#xx'), html);
+								pageDown(5);
+							}
+						});
+					}
+				}
+			});
+			UIChatBox.addEventListener({
+				target : 'inputBar',
+				name : 'move'
+			}, function(ret, err) {
+				if (ret) {
+					api.setFrameAttr({
+						name : 'frame_lt',
+						rect : {
+							x : 0,
+							y : api.pageParam.head_h,
+							w : 'auto',
+							h : api.winHeight - api.pageParam.head_h - ret.inputBarHeight - ret.panelHeight
+						},
+					});
+					pageDown(5);
+				}
+			});
+			api.addEventListener({
+				name : 'new_msg'
+			}, function(ret, err) {
+				var html = '';
+				if (ret.value.msg.targetId == api.pageParam.id) {
+					if (ret.value.msg.objectName == 'RC:TxtMsg') {
+						txt = ret.value.msg.content.text.replace(reg, function(a, b) {
+							return face[a] ? face[a] : a;
+						});
+						html += '<div class="aui-chat-header">' + sj(ret.value.msg.sentTime) + '</div>';
+						html += '<div class="aui-chat-item aui-chat-left">';
+						html += '	  <div class="aui-chat-media"><img src="' + api.pageParam.tx + '" /></div>';
+						html += '	  <div class="aui-chat-inner"><div class="aui-chat-name">' + api.pageParam.xm + '</div>';
+						html += '	       <div class="aui-chat-content">';
+						html += '		        <div class="aui-chat-arrow"></div>';
+						html += txt;
+						html += '               </div>';
+						html += '	  </div>';
+						html += '</div>';
+					} else if (ret.value.msg.objectName == 'RC:ImgMsg') {
+						html += '<div class="aui-chat-header">' + sj(ret.value.msg.sentTime) + '</div>';
+						html += '<div class="aui-chat-item aui-chat-left">';
+						html += '	  <div class="aui-chat-media"><img src="' + api.pageParam.tx + '" /></div>';
+						html += '	  <div class="aui-chat-inner"><div class="aui-chat-name">' + api.pageParam.xm + '</div>';
+						html += '	       <div class="aui-chat-content_img">';
+						html += '		        <div class="aui-chat-arrow"></div>';
+						html += '               <img onclick="openImage(\'' + ret.value.msg.content.imageUrl + '\')" src="' + ret.value.msg.content.thumbPath + '"/>';
+						html += '          </div>';
+						html += '	  </div>';
+						html += '</div>';
+					}
+					//标为已读
+					rong.clearMessagesUnreadStatus({
+						conversationType : 'PRIVATE',
+						targetId : api.pageParam.id
+					}, function(ret, err) {
+					})
+					api.cancelNotification({
+						id : -1
+					});
+					$api.append($api.dom('#xx'), html);
+					pageDown(5);
+				}
+			});
+			api.setCustomRefreshHeaderInfo({
+				image : {
+					pull : ['widget://image/1.png', 'widget://image/2.png', 'widget://image/3.png', 'widget://image/4.png', 'widget://image/5.png', 'widget://image/6.png', 'widget://image/7.png', 'widget://image/8.png'],
+					load : ['widget://image/8.png', 'widget://image/7.png', 'widget://image/6.png', 'widget://image/5.png', 'widget://image/4.png', 'widget://image/3.png', 'widget://image/2.png', 'widget://image/1.png']
+				},
+				bgColor : '#f5f5f5',
+			}, function() {
+				getHistoryMessages(api.pageParam.id, 'PRIVATE');
+				setTimeout(function() {
+					api.refreshHeaderLoadDone();
+				}, 3000)
+			});
+		}
+		function getPicture(type) {
+			api.getPicture({
+				sourceType : type,
+				encodingType : 'jpg',
+				mediaValue : 'pic',
+				destinationType : 'url',
+				allowEdit : false,
+				quality : 100,
+				saveToPhotoAlbum : false
+			}, function(ret, err) {
+				if (ret) {
+					var extra = {
+						xm1 : $api.getStorage('zhanghao'),
+						xm2 : api.pageParam.xm,
+						tx1 : $api.getStorage('tx'),
+						tx2 : api.pageParam.tx
+					};
+					var rong = api.require('rongCloud2');
+					rong.sendImageMessage({
+						conversationType : 'PRIVATE',
+						targetId : api.pageParam.id,
+						imagePath : ret.data,
+						extra : JSON.stringify(extra)
+					}, function(ret, err) {
+						if (ret.status == 'prepare') {
+							var bpic = ret.result.message.content.imageUrl;
+							var spic = ret.result.message.content.thumbPath;
+							var html = '';
+							html += '<div class="aui-chat-item aui-chat-right">';
+							html += '	  <div class="aui-chat-media"><img src="' + $api.getStorage('tx') + '" /></div>';
+							html += '	  <div class="aui-chat-inner"><div class="aui-chat-name">' + $api.getStorage('zhanghao') + '</div>';
+							html += '	       <div class="aui-chat-content_img">';
+							html += '		        <div class="aui-chat-arrow"></div>';
+							html += '               <img onclick="openImage(\'' + bpic + '\')" src="' + spic + '"/>';
+							html += '          </div>';
+							html += '	  </div>';
+							html += '</div>';
+							$api.append($api.dom('#xx'), html);
+						}
+					});
+					var UIChatBox = api.require('UIChatBox');
+					UIChatBox.closeBoard();
+				} else {
+					api.toast({
+						msg : '图像获取失败',
+						duration : 3000,
+						location : 'bottom'
+					});
+					var UIChatBox = api.require('UIChatBox');
+					UIChatBox.closeBoard();
+				}
+			});
+		}
+
+		//获取最后一段会话
+		function getLatestMessages(targetId, conversationType) {
+			var rong = api.require('rongCloud2');
+			rong.getLatestMessages({
+				conversationType : conversationType,
+				targetId : targetId,
+				count : 4
+			}, function(ret, err) {
+				if (ret.status == 'success') {
+					if (ret.result && ret.result.length > 0) {
+						var html = '';
+						for (var i = ret.result.length - 1; i >= 0; i--) {
+							var rs = ret.result[i];
+							var nType = rs.type;
+							var extra = transExtra(rs.content.extra);
+							if (extra.xm1 == $api.getStorage('zhanghao')) {
+								var xm = extra.xm2;
+								var tx = extra.tx2;
+							} else {
+								var xm = extra.xm1;
+								var tx = extra.tx1;
+							}
+							if (rs.objectName == 'RC:TxtMsg') {
+								jsxx = rs.content.text.replace(reg, function(a, b) {
+									return face[a] ? face[a] : a;
+								});
+								if (rs.messageDirection == 'SEND') {
+									html += '<div class="aui-chat-header" data-id="' + rs.messageId + '">' + sj(rs.sentTime) + '</div>';
+									html += '<div class="aui-chat-item aui-chat-right">';
+									html += '	  <div class="aui-chat-media"><img src="' + $api.getStorage('tx') + '" /></div>';
+									html += '	  <div class="aui-chat-inner"><div class="aui-chat-name">' + $api.getStorage('zhanghao') + '</div>';
+									html += '	       <div class="aui-chat-content">';
+									html += '		        <div class="aui-chat-arrow"></div>';
+									html += jsxx;
+									html += '               </div>';
+									html += '	  </div>';
+									html += '</div>';
+								} else {
+									html += '<div class="aui-chat-header" data-id="' + rs.messageId + '">' + sj(rs.sentTime) + '</div>';
+									html += '<div class="aui-chat-item aui-chat-left">';
+									html += '	  <div class="aui-chat-media"><img src="' + tx + '" /></div>';
+									html += '	  <div class="aui-chat-inner"><div class="aui-chat-name">' + xm + '</div>';
+									html += '	       <div class="aui-chat-content">';
+									html += '		        <div class="aui-chat-arrow"></div>';
+									html += jsxx;
+									html += '               </div>';
+									html += '	  </div>';
+									html += '</div>';
+								}
+							} else if (rs.objectName == 'RC:ImgMsg') {
+								var bpic = rs.content.imageUrl;
+								var spic = rs.content.thumbPath;
+								if (rs.messageDirection == 'SEND') {
+									html += '<div class="aui-chat-header" data-id="' + rs.messageId + '">' + sj(rs.sentTime) + '</div>';
+									html += '<div class="aui-chat-item aui-chat-right">';
+									html += '	  <div class="aui-chat-media"><img src="' + $api.getStorage('tx') + '" /></div>';
+									html += '	  <div class="aui-chat-inner"><div class="aui-chat-name">' + $api.getStorage('zhanghao') + '</div>';
+									html += '	       <div class="aui-chat-content_img">';
+									html += '		        <div class="aui-chat-arrow"></div>';
+									html += '               <img onclick="openImage(\'' + bpic + '\')" src="' + spic + '"/>';
+									html += '          </div>';
+									html += '	  </div>';
+									html += '</div>';
+								} else {
+									html += '<div class="aui-chat-header" data-id="' + rs.messageId + '">' + sj(rs.sentTime) + '</div>';
+									html += '<div class="aui-chat-item aui-chat-left">';
+									html += '	  <div class="aui-chat-media"><img src="' + tx + '" /></div>';
+									html += '	  <div class="aui-chat-inner"><div class="aui-chat-name">' + xm + '</div>';
+									html += '	       <div class="aui-chat-content_img">';
+									html += '		        <div class="aui-chat-arrow"></div>';
+									html += '               <img onclick="openImage(\'' + bpic + '\')" src="' + spic + '"/>';
+									html += '          </div>';
+									html += '	  </div>';
+									html += '</div>';
+								}
+							}
+						}
+						$api.append($api.dom('#xx'), html);
+						pageDown(5);
+					}
+				}
+			})
+		}
+
+		//下拉加载历史记录
+		function getHistoryMessages(targetId, conversationType) {
+			var rong = api.require('rongCloud2');
+			var oldid = $(".aui-chat-header").first().data("id");
+			rong.getHistoryMessages({
+				conversationType : conversationType,
+				targetId : targetId,
+				oldestMessageId : oldid,
+				count : 6
+			}, function(ret, err) {
+				if (ret.status == 'success') {
+					var html = '';
+					if (ret.result && ret.result.length > 1) {
+						for (var i = ret.result.length - 1; i >= 0; i--) {
+							var rs = ret.result[i];
+							var nType = rs.type;
+							var extra = transExtra(rs.content.extra);
+							if (extra.xm1 == $api.getStorage('zhanghao')) {
+								var xm = extra.xm2;
+								var tx = extra.tx2;
+							} else {
+								var xm = extra.xm1;
+								var tx = extra.tx1;
+							}
+							if (rs.objectName == 'RC:TxtMsg') {
+								jsxx = rs.content.text.replace(reg, function(a, b) {
+									return face[a] ? face[a] : a;
+								});
+								if (rs.messageDirection == 'SEND') {
+									html += '<div class="aui-chat-header" data-id="' + rs.messageId + '">' + sj(rs.sentTime) + '</div>';
+									html += '<div class="aui-chat-item aui-chat-right">';
+									html += '	  <div class="aui-chat-media"><img src="' + $api.getStorage('tx') + '" /></div>';
+									html += '	  <div class="aui-chat-inner"><div class="aui-chat-name">' + $api.getStorage('zhanghao') + '</div>';
+									html += '	       <div class="aui-chat-content">';
+									html += '		        <div class="aui-chat-arrow"></div>';
+									html += jsxx;
+									html += '               </div>';
+									html += '	  </div>';
+									html += '</div>';
+								} else {
+									html += '<div class="aui-chat-header" data-id="' + rs.messageId + '">' + sj(rs.sentTime) + '</div>';
+									html += '<div class="aui-chat-item aui-chat-left">';
+									html += '	  <div class="aui-chat-media"><img src="' + tx + '" /></div>';
+									html += '	  <div class="aui-chat-inner"><div class="aui-chat-name">' + xm + '</div>';
+									html += '	       <div class="aui-chat-content">';
+									html += '		        <div class="aui-chat-arrow"></div>';
+									html += jsxx;
+									html += '               </div>';
+									html += '	  </div>';
+									html += '</div>';
+								}
+							} else if (rs.objectName == 'RC:ImgMsg') {
+								var bpic = rs.content.imageUrl;
+								var spic = rs.content.thumbPath;
+								if (rs.messageDirection == 'SEND') {
+									html += '<div class="aui-chat-header" data-id="' + rs.messageId + '">' + sj(rs.sentTime) + '</div>';
+									html += '<div class="aui-chat-item aui-chat-right">';
+									html += '	  <div class="aui-chat-media" ><img src="' + $api.getStorage('tx') + '" /></div>';
+									html += '	  <div class="aui-chat-inner"><div class="aui-chat-name">' + $api.getStorage('zhanghao') + '</div>';
+									html += '	       <div class="aui-chat-content_img">';
+									html += '		        <div class="aui-chat-arrow"></div>';
+									html += '               <img onclick="openImage(\'' + bpic + '\')" src="' + spic + '"/>';
+									html += '          </div>';
+									html += '	  </div>';
+									html += '</div>';
+								} else {
+									html += '<div class="aui-chat-header" data-id="' + rs.messageId + '">' + sj(rs.sentTime) + '</div>';
+									html += '<div class="aui-chat-item aui-chat-left">';
+									html += '	  <div class="aui-chat-media"><img src="' + tx + '" /></div>';
+									html += '	  <div class="aui-chat-inner"><div class="aui-chat-name">' + xm + '</div>';
+									html += '	       <div class="aui-chat-content_img">';
+									html += '		        <div class="aui-chat-arrow"></div>';
+									html += '               <img onclick="openImage(\'' + bpic + '\')" src="' + spic + '"/>';
+									html += '          </div>';
+									html += '	  </div>';
+									html += '</div>';
+								}
+							}
+						}
+						$api.before($api.dom('#hist'), html);
+					} else {
+						api.toast({
+							msg : '木有了消息啦…'
+						});
+					}
+				}
+			})
+		}
+	</script>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+		<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+		<link rel="stylesheet" type="text/css" href="../css/aui.css" />
+		<style type="text/css">
+			.aui-list .wechat-avatar {
+				width: 3rem;
+			}
+			.wechat-avatar, .wechat-avatar > img {
+				border-radius: 8px;
+			}
+			.aui-list .aui-list-item-text img {
+				width: 14px;
+				height: 14px;
+			}
+			.aui-list .aui-list-item-text {
+				-webkit-justify-content: flex-start;
+				justify-content: flex-start;
+			}
+			.aui-list .aui-list-item-right {
+				right: 20px;
+				position: fixed;
+			}
+			.aui-list .aui-list-item-title {
+				font-size: 0.9rem;
+				position: relative;
+				max-width: 100%;
+				color: #212121;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="aui-content aui-margin-b-15">
+			<ul class="aui-list aui-media-list" id="hh_list"></ul>
+		</div>
+	</body>
+	<script type="text/javascript" src="../script/api.js" ></script>
+	<script type="text/javascript" src="../script/base.js" ></script>
+	<script type="text/javascript">
+		apiready = function() {
+			var rong = api.require('rongCloud2');
+			rong.getConversationList(function(ret, err) {
+				if (ret.status == 'success') {
+					var html = '';
+					for (var i in ret.result) {
+						var rs = ret.result[i];
+						var nType = rs.type;
+						var extra = transExtra(rs.latestMessage.extra);
+						
+						if (extra.xm1 == $api.getStorage('zhanghao')) {
+							var xm = extra.xm2;
+							var tx = extra.tx2;
+						} else {
+							var xm = extra.xm1;
+							var tx = extra.tx1;
+						}
+						if (rs.unreadMessageCount > 0 && extra.xm2 == $api.getStorage('zhanghao')) {
+							var shu = '<div class="aui-badge">' + rs.unreadMessageCount + '</div>';
+						} else {
+							var shu = '';
+						}
+						if (rs.latestMessage.text) {
+							xx = rs.latestMessage.text.replace(reg, function(a, b) {
+								return face[a] ? face[a] : a;
+							});
+							var types = '<div class="aui-list-item-text aui-font-size-12">' + xx + '</div>'
+						} else {
+							var types = '<div class="aui-list-item-text aui-font-size-12"><div class="aui-text-warning">[图像消息]</div></div>'
+						}
+						html += '<li class="aui-list-item aui-list-item-middle" onclick="lt(' + rs.targetId + ',' + "'" + xm + "'" + ',' + "'" + tx + "'" + ')">';
+						html += '     <div class="aui-media-list-item-inner">';
+						html += '	       <div class="aui-list-item-media wechat-avatar">';
+						html += shu;
+						html += '		        <img src="' + tx + '" /></div>';
+						html += '			<div class="aui-list-item-inner">';
+						html += '                <div class="aui-list-item-text">';
+						html += '                     <div class="aui-list-item-title">' + xm + '</div><div class="aui-list-item-right">' + sj(rs.sentTime) + '</div></div>';
+						html += types;
+						html += '           </div>';
+						html += '     </div>';
+						html += '</li>';
+					}
+					$api.html($api.dom('#hh_list'), html);
+				}
+			})
+			api.setCustomRefreshHeaderInfo({
+				bgColor : '#ffffff',
+				image : {
+					pull : ['widget://image/1.png', 'widget://image/2.png', 'widget://image/3.png', 'widget://image/4.png', 'widget://image/5.png', 'widget://image/6.png', 'widget://image/7.png', 'widget://image/8.png'],
+					load : ['widget://image/8.png', 'widget://image/7.png', 'widget://image/6.png', 'widget://image/5.png', 'widget://image/4.png', 'widget://image/3.png', 'widget://image/2.png', 'widget://image/1.png']
+				}
+			}, function() {
+				hh_list();
+				setTimeout(function() {
+					api.refreshHeaderLoadDone();
+				}, 2000)
+			});
+			api.addEventListener({
+				name : 'senthh'
+			}, function(ret, err) {
+				hh_list();
+			});
+		}
+		function hh_list() {
+			var rong = api.require('rongCloud2');
+			rong.getConversationList(function(ret, err) {
+				if (ret.status == 'success') {
+					var html = '';
+					for (var i in ret.result) {
+						var rs = ret.result[i];
+						var nType = rs.type;
+						var extra = transExtra(rs.latestMessage.extra);
+						
+						if (extra.xm1 == $api.getStorage('zhanghao')) {
+							var xm = extra.xm2;
+							var tx = extra.tx2;
+						} else {
+							var xm = extra.xm1;
+							var tx = extra.tx1;
+						}
+						if (rs.unreadMessageCount > 0 && extra.xm2 == $api.getStorage('zhanghao')) {
+							var shu = '<div class="aui-badge">' + rs.unreadMessageCount + '</div>';
+						} else {
+							var shu = '';
+						}
+						if (rs.latestMessage.text) {
+							xx = rs.latestMessage.text.replace(reg, function(a, b) {
+								return face[a] ? face[a] : a;
+							});
+							var types = '<div class="aui-list-item-text aui-font-size-12">' + xx + '</div>'
+						} else {
+							var types = '<div class="aui-list-item-text aui-font-size-12"><div class="aui-text-warning">[图像消息]</div></div>'
+						}
+						html += '<li class="aui-list-item aui-list-item-middle" onclick="lt(' + rs.targetId + ',' + "'" + xm + "'" + ',' + "'" + tx + "'" + ')">';
+						html += '     <div class="aui-media-list-item-inner">';
+						html += '	       <div class="aui-list-item-media wechat-avatar">';
+						html += shu;
+						html += '		        <img src="' + tx + '" /></div>';
+						html += '			<div class="aui-list-item-inner">';
+						html += '                <div class="aui-list-item-text">';
+						html += '                     <div class="aui-list-item-title">' + xm + '</div><div class="aui-list-item-right">' + sj(rs.sentTime) + '</div></div>';
+						html += types;
+						html += '           </div>';
+						html += '     </div>';
+						html += '</li>';
+					}
+					$api.html($api.dom('#hh_list'), html);
+				}
+			})
+		}
+
+		function lt(id, xm, tx) {
+			if ($api.getStorage('id') == id) {
+			} else {
+				var rong = api.require('rongCloud2');
+				rong.clearMessagesUnreadStatus({
+					conversationType : 'PRIVATE',
+					targetId : id
+				}, function(ret, err) {
+				})
+			}
+			api.openWin({
+				reload : true,
+				name : 'win_lt',
+				url : 'win_lt.html',
+				pageParam : {
+					id : id,
+					xm : xm,
+					tx : tx
+				},
+				vScrollBarEnabled : false,
+			});
+			api.sendEvent({
+				name : 'xxs'
+			});
+			api.sendEvent({
+				name : 'senthh'
+			});
+		}
+	</script>
+</html>

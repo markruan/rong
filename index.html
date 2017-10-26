@@ -1,0 +1,26 @@
+<script type="text/javascript" src="./script/api.js"></script>
+<script type="text/javascript">
+	apiready = function() {
+		api.setStatusBarStyle({
+			style : 'light',
+			color : '#000'
+		});
+		var zt = $api.getStorage('zt')
+		if (zt == 1) {
+			api.openWin({
+				reload : true,
+				name : 'index',
+				url : 'html/main.html',
+				hScrollBarEnabled : false
+			});
+		} else {
+			api.openWin({
+				bounces : false,
+				name : 'login',
+				url : 'html/win_login.html',
+				vScrollBarEnabled : false,
+				hScrollBarEnabled : false
+			});
+		}
+	}
+</script>

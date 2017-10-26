@@ -1,0 +1,195 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+		<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+		<link rel="stylesheet" type="text/css" href="../css/aui.css" />
+		<style type="text/css">
+			.aui-bar-tab {
+				border-top: 1px solid #EEEEEE;
+			}
+		</style>
+	</head>
+	<body>
+		<header class="aui-bar aui-bar-nav" id="head">
+			最新消息
+		</header>
+		<footer class="aui-bar aui-bar-tab" id="footer">
+			<div class="aui-bar-tab-item xx"></div>
+			<script id="xx" type="text/html">
+				<%if(aa>0) { %>
+				<div class="aui-badge"><%=aa%></div>
+				<i class="aui-iconfont aui-icon-comment"></i>
+				<div class="aui-bar-tab-label">
+				消 息
+				</div>
+				<%}else{%>
+				<i class="aui-iconfont aui-icon-comment"></i>
+				<div class="aui-bar-tab-label">
+				消 息
+				</div>
+				<%}%>
+			</script>
+			<div class="aui-bar-tab-item" tapmode>
+				<i class="aui-iconfont aui-icon-my"></i>
+				<div class="aui-bar-tab-label">
+					好 友
+				</div>
+			</div>
+			<div class="aui-bar-tab-item" tapmode>
+				<i class="aui-iconfont aui-icon-gear"></i>
+				<div class="aui-bar-tab-label">
+					设 置
+				</div>
+			</div>
+		</footer>
+	</body>
+	<script type="text/javascript" src="../script/api.js"></script>
+	<script type="text/javascript" src="../script/aui-tab.js" ></script>
+	<script type="text/javascript" src="../script/dcc.js" ></script>
+	<script type="text/javascript">
+		apiready = function() {
+			api.parseTapmode();
+			$api.fixStatusBar($api.dom('header'));
+			var head_h = $api.offset($api.dom('header')).h;
+			var body_h = $api.offset($api.dom('body')).h;
+			var foot_h = $api.offset($api.dom('footer')).h;
+			var rect_h = body_h - head_h - foot_h;
+			api.addEventListener({
+				name : 'keyback'
+			}, function(ret, err) {
+				api.toast({
+					msg : '再点一哈退出应用',
+					duration : 2000,
+					location : 'bottom'
+				});
+				api.addEventListener({
+					name : 'keyback'
+				}, function(ret, err) {
+					api.closeWidget({
+						silent : true
+					});
+				});
+				setTimeout(function() {
+				}, 2000)
+			});
+			var rong = api.require('rongCloud2');
+			rong.init(function(ret, err) {
+				if (ret.status == 'success') {
+					jtxx();
+					rong.connect({
+						token : $api.getStorage('token')
+					}, function(ret, err) {
+					});
+				} else {
+					api.toast({
+						msg : '服务器连接失败'
+					});
+				}
+			});
+			rong.getTotalUnreadCount(function(ret, err) {
+				if (ret) {
+					var data = {
+						aa : ret.result
+					}
+					$api.dom('.xx').innerHTML = dcc('xx', data);
+				}
+			})
+			api.addEventListener({
+				name : 'xxs'
+			}, function(ret, err) {
+				rong.getTotalUnreadCount(function(ret, err) {
+					if (ret) {
+						var data = {
+							aa : ret.result
+						}
+						$api.dom('.xx').innerHTML = dcc('xx', data);
+					}
+				})
+			});
+			api.openFrameGroup({
+				name : 'group',
+				index : 0,
+				rect : {
+					x : 0,
+					y : head_h,
+					w : 'auto',
+					h : rect_h
+				},
+				frames : [{
+					name : 'huihua',
+					url : 'frame_chat_list.html',
+					vScrollBarEnabled : false,
+					hScrollBarEnabled : false,
+				}, {
+					name : 'haoyou',
+					url : 'frame_list.html',
+					vScrollBarEnabled : false,
+					hScrollBarEnabled : false,
+				}, {
+					name : 'my',
+					url : 'frame_list.html',
+					vScrollBarEnabled : false,
+					hScrollBarEnabled : false,
+				}, {
+					name : 'my1',
+					url : 'frame_my.html',
+					vScrollBarEnabled : false,
+					hScrollBarEnabled : false,
+				}]
+			}, function(ret, err) {
+			});
+		}
+		var tab = new auiTab({
+			element : document.getElementById("footer")
+		}, function(ret) {
+			var id = ret.index - 1;
+			api.setFrameGroupIndex({
+				name : 'group',
+				index : id
+			});
+			if (id == 0) {
+				$api.byId('head').innerHTML = '最新消息';
+			}
+			if (id == 2) {
+				$api.byId('head').innerHTML = '在线好友';
+			}
+			if (id == 3) {
+				$api.byId('head').innerHTML = '我的动态';
+			}
+		});
+		function jtxx() {
+			var rong = api.require('rongCloud2');
+			rong.setOnReceiveMessageListener(function(ret, err) {
+				if (ret) {
+					rong.getTotalUnreadCount(function(ret, err) {
+						if (ret.status == 'success') {
+							api.notification({
+								vibrate : [300, 500],
+								sound : 'default',
+								notify : {
+									title : '来消息了',
+									content : '你' + ret.result + '有消息未读',
+									updateCurrent : false
+								}
+							});
+						}
+					})
+					api.sendEvent({
+						name : 'senthh'
+					});
+					api.sendEvent({
+						name : 'new_msg',
+						extra : {
+							msg : ret.result.message
+						}
+					})
+					api.sendEvent({
+						name : 'xxs'
+					});
+				}
+			})
+		}
+	</script>
+</html>

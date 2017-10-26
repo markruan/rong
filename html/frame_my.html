@@ -1,0 +1,226 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+		<meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+		<link rel="stylesheet" type="text/css" href="../css/aui.css" />
+		<style type="text/css">
+			.user-info {
+				background-color: #ffffff;
+				padding: 0.75rem 0;
+			}
+			img.avatar {
+				display: block;
+				margin: 0 auto;
+				width: 20%;
+			}
+			.aui-list .aui-list-header {
+				background-color: #ffffff;
+				line-height: 1.2rem;
+			}
+			.text-white {
+				color: #ffffff !important;
+			}
+			.tuichu {
+				font-size: 0.8rem;
+				color: #424242;
+				text-align: center;
+				margin-top: 0.5rem;
+				background-color: #FFF;
+				height: 2.4rem;
+				line-height: 2.4rem;
+				border-top: 1px solid #EEEEEE;
+				border-bottom: 1px solid #EEEEEE;
+			}
+		</style>
+	</head>
+	<body>
+		<section class="aui-content user-info aui-text-center aui-margin-b-15">
+			<img src="../res/tx1.jpg" class="avatar aui-img-round" id="tx">
+			<h2 class="aui-margin-t-15" id="zh">川哥哥</h2>
+			<div class="aui-row aui-margin-t-15">
+				<div class="aui-col-xs-6 aui-text-right aui-border-r aui-padded-r-10">
+					<div class="aui-label aui-label-info">
+						LV 6
+					</div>
+				</div>
+				<div class="aui-col-xs-6 aui-text-left aui-padded-l-10">
+					学分:1000
+				</div>
+			</div>
+		</section>
+		<section class="aui-content">
+			<ul class="aui-list aui-list-in">
+				<li class="aui-list-item">
+					<div class="aui-list-item-label-icon">
+						<i class="aui-iconfont aui-icon-info aui-text-info"></i>
+					</div>
+					<div class="aui-list-item-inner aui-list-item-arrow" onclick="checkUpdate()">
+						<div class="aui-list-item-title">
+							系统版本
+						</div>
+						<div class="aui-list-item-right" id="bb"></div>
+					</div>
+				</li>
+				<li class="aui-list-item">
+					<div class="aui-list-item-label-icon">
+						<i class="aui-iconfont aui-icon-display aui-text-info"></i>
+					</div>
+					<div class="aui-list-item-inner aui-list-item-arrow" onclick="showAction()">
+						<div class="aui-list-item-title">
+							实名认证
+						</div>
+					</div>
+				</li>
+				<li class="aui-list-item">
+					<div class="aui-list-item-label-icon">
+						<i class="aui-iconfont aui-icon-comment aui-text-info"></i>
+					</div>
+					<div class="aui-list-item-inner aui-list-item-arrow">
+						<div class="aui-list-item-title">
+							意见建议
+						</div>
+					</div>
+				</li>
+				<li class="aui-list-item">
+					<div class="aui-list-item-label-icon">
+						<i class="aui-iconfont aui-icon-phone aui-text-info"></i>
+					</div>
+					<div class="aui-list-item-inner aui-list-item-arrow" onclick="tel()">
+						<div class="aui-list-item-title">
+							客服电话
+						</div>
+					</div>
+				</li>
+				<li class="aui-list-item">
+					<div class="aui-list-item-label-icon">
+						<i class="aui-iconfont aui-icon-gear aui-text-warning"></i>
+					</div>
+					<div class="aui-list-item-inner aui-list-item-arrow">
+						<div class="aui-list-item-title">
+							系统设置
+						</div>
+					</div>
+				</li>
+			</ul>
+		</section>
+		<div class="tuichu" onclick="tuichu()">
+			退出登录
+		</div>
+	</body>
+	<script type="text/javascript" src="../script/api.js" ></script>
+	<script type="text/javascript" src="../script/aui-dialog.js" ></script>
+	<script type="text/javascript">
+		apiready = function() {
+			$api.byId('zh').innerHTML = $api.getStorage('zhanghao');
+			$api.byId('tx').src = $api.getStorage('tx');
+		}
+		function checkUpdate() {
+			var dialog = new auiDialog({});
+			dialog.alert({
+				title : "已经是最新版本",
+				msg : '当前版本：' + api.appVersion,
+				buttons : ['取消', '确定']
+			}, function(ret) {
+			})
+		}
+
+		function tel() {
+			var dialog = new auiDialog({});
+			dialog.alert({
+				title : "友情提示",
+				msg : '是否拨打客服电话：13730850035',
+				buttons : ['取消', '确定']
+			}, function(ret) {
+				if (ret.buttonIndex == 2) {
+					api.call({
+						type : 'tel_prompt',
+						number : '13730850035'
+					});
+				}
+			})
+		}
+
+		function showAction() {
+			api.actionSheet({
+				title : '获取照片',
+				cancelTitle : '取消',
+				buttons : ['马上拍照', '手机相册']
+			}, function(ret, err) {
+				if (ret) {
+					getPicture(ret.buttonIndex);
+				}
+			});
+		}
+
+		function getPicture(sourceType) {
+			if (sourceType == 1) {
+				api.getPicture({
+					sourceType : 'camera',
+					encodingType : 'png',
+					mediaValue : 'pic',
+					allowEdit : false,
+					quality : 90,
+					saveToPhotoAlbum : true
+				}, function(ret, err) {
+				});
+			} else if (sourceType == 2) {
+				var obj = api.require('UIMediaScanner');
+				obj.open({
+					type : 'picture',
+					column : 4,
+					max : 1,
+					sort : {
+						key : 'time',
+						order : 'desc'
+					},
+					texts : {
+						stateText : '已选择*项',
+						cancelText : '取消',
+						finishText : '完成'
+					},
+					styles : {
+						bg : '#fff',
+						mark : {
+							icon : '',
+							position : 'bottom_right',
+							size : 20
+						},
+						nav : {
+							bg : '#eee',
+							stateColor : '#000',
+							stateSize : 18,
+							cancleBg : 'rgba(0,0,0,0)',
+							cancelColor : '#000',
+							cancelSize : 18,
+							finishBg : 'rgba(0,0,0,0)',
+							finishColor : '#000',
+							finishSize : 18
+						}
+					}
+				}, function(ret) {
+				});
+			}
+		}
+
+		function tuichu() {
+			$api.clearStorage();
+			api.toast({
+				msg : '成功退出',
+				duration : 3000,
+				location : 'bottom'
+			});
+			api.openWin({
+				bounces : false,
+				name : 'win_login',
+				url : 'win_login.html',
+				vScrollBarEnabled : false
+			});
+			api.closeWin({
+				name : 'index'
+			});
+			api.closeWin();
+		}
+	</script>
+</html>
